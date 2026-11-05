@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CS Chat</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#ffffff;--panel:#ffffff;--fg:#050505;--mut:#65676b;--line:#e4e6eb;--acc:#0866ff;--acc-fg:#fff;--warn:#c2410c;--ok:#1f7a3d;--me:#0866ff;--bot:#f0f2f5;--draft:#eef5ff;--draftline:#b9d5ff;--hover:#f2f3f5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#18191a;--panel:#242526;--fg:#e4e6eb;--mut:#b0b3b8;--line:#3e4042;--acc:#2d88ff;--acc-fg:#fff;--warn:#f0a070;--ok:#6fd08c;--me:#0866ff;--bot:#3a3b3c;--draft:#1c2b41;--draftline:#2d5a9e;--hover:#303132;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#18191a;--panel:#242526;--fg:#e4e6eb;--mut:#b0b3b8;--line:#3e4042;--acc:#2d88ff;--acc-fg:#fff;--warn:#f0a070;--ok:#6fd08c;--me:#0866ff;--bot:#3a3b3c;--draft:#1c2b41;--draftline:#2d5a9e;--hover:#303132;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 'Sarabun',system-ui,sans-serif;padding-inline:max(0px,env(safe-area-inset-left,0px)) max(0px,env(safe-area-inset-right,0px))}
+button,select,textarea,input{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);height:100vh;height:100dvh}
+.side{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-width:0;min-height:0}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.pad{padding:12px max(16px,env(safe-area-inset-left,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.shead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.shead b{font-size:17px}
+.btn{border:1px solid var(--line);background:var(--panel);padding:6px 12px;border-radius:999px;cursor:pointer}
+.btn.pri{background:var(--acc);color:var(--acc-fg);border-color:var(--acc);font-weight:700}
+.btn.sm{padding:3px 10px;font-size:13px}
+.btn:disabled{opacity:.5}
+.rooms{display:flex;gap:6px;padding:8px 14px}
+.rooms .btn[aria-pressed=true]{background:var(--acc);color:var(--acc-fg);border-color:var(--acc)}
+.list{overflow:auto;flex:1;padding:4px 8px 12px}
+.item{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:10px;padding:9px 10px;cursor:pointer}
+.item:hover{background:var(--bg)}
+.item[aria-current=true]{background:var(--bg);box-shadow:inset 3px 0 var(--acc)}
+.item b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item small{color:var(--mut);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mhead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.mhead input{flex:1;min-width:120px;border:1px solid transparent;background:transparent;font-weight:700;font-size:16px;padding:4px 6px;border-radius:8px}
+.mhead input:focus{border-color:var(--line);background:var(--bg);outline:none}
+.mhead select{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 8px;max-width:100%}
+.back{display:none}
+.chat{flex:1;overflow:auto;padding:14px max(14px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px}
+.b{max-width:min(640px,92%);padding:9px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.u{align-self:flex-end;background:var(--me);color:#fff;border-bottom-right-radius:4px}
+.a{align-self:flex-start;background:var(--bot);border-bottom-left-radius:4px}
+.b img{max-height:120px;border-radius:8px;display:block;margin-bottom:6px}
+.draft{background:var(--draft);border:1px solid var(--draftline);border-radius:10px;padding:9px 11px;margin:8px 0}
+.draft .dh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--mut);margin-bottom:4px}
+.empty{margin:auto;text-align:center;color:var(--mut);padding:20px;max-width:420px}
+.empty b{color:var(--fg);font-size:17px}
+.comp{border-top:1px solid var(--line);background:var(--panel);padding:10px max(12px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px))}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.thumbs div{position:relative}.thumbs img{height:56px;border-radius:8px;display:block}
+.thumbs button{position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;border:0;background:#000b;color:#fff;cursor:pointer;line-height:1}
+.crow{display:flex;gap:8px;align-items:flex-end}
+.crow textarea{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:18px;padding:9px 14px;resize:none;max-height:160px;min-height:42px}
+.crow textarea:focus{outline:2px solid var(--acc);outline-offset:-1px}
+.send{border:0;background:var(--acc);color:var(--acc-fg);border-radius:50%;width:42px;height:42px;cursor:pointer;font-size:18px;flex:none}
+.send:disabled{opacity:.5}
+.icon{border:1px solid var(--line);background:var(--bg);border-radius:50%;width:42px;height:42px;cursor:pointer;flex:none;display:grid;place-items:center;font-size:18px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--mut)}
+.tools a{color:var(--mut);cursor:pointer;text-decoration:underline}
+.hint{font-size:13px;color:var(--mut)}
+.warn{color:var(--warn)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);max-width:min(760px,94vw);width:100%;max-height:90vh}
+dialog::backdrop{background:#0008}
+dialog textarea,dialog select,dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:8px 10px;margin-top:6px}
+dialog textarea{min-height:100px;resize:vertical}
+dialog h3{margin:16px 0 4px;font-size:15px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mut);margin:0 2px;animation:bl 1s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+@media(max-width:820px){
+ .app{grid-template-columns:minmax(0,1fr)}
+ .app[data-v=list] .main{display:none}
+ .app[data-v=chat] .side{display:none}
+ .back{display:inline-block}
+}
+
+/* modern messenger look */
+body{font:15px/1.45 system-ui,-apple-system,'Segoe UI','Sarabun',sans-serif;background:var(--panel)}
+.side{border-right:1px solid var(--line)}
+.shead{border-bottom:0;padding:14px 14px 6px}.shead b{font-size:22px;font-weight:800}
+.btn{border:0;background:var(--bot);color:var(--fg);padding:7px 14px;font-weight:600}
+.btn:hover{filter:brightness(.96)}
+.btn.pri{background:var(--acc);color:var(--acc-fg)}
+.btn.sm{padding:5px 12px}
+.rooms .btn[aria-pressed=true]{background:var(--draft);color:var(--acc)}
+.item{border-radius:12px;padding:10px 12px;position:relative;padding-left:60px;min-height:62px}
+.item::before{content:attr(data-i);position:absolute;left:10px;top:9px;width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6aa8ff,var(--acc));color:#fff;display:grid;place-items:center;font-weight:800;font-size:17px}
+.item:hover{background:var(--hover)}
+.item[aria-current=true]{background:var(--draft);box-shadow:none}
+.mhead{border-bottom:1px solid var(--line);box-shadow:0 1px 3px #0000000d}
+.mhead select{border:0;background:var(--bot)}
+.chat{background:var(--panel);gap:4px;padding:14px}
+.b{border-radius:18px;padding:8px 13px;max-width:min(560px,82%)}
+.u{background:var(--me);color:#fff;border-bottom-right-radius:18px}
+.a{background:var(--bot);border-bottom-left-radius:18px}
+.draft{background:var(--panel);border:1px solid var(--draftline);border-radius:14px;box-shadow:0 1px 2px #0000000d}
+.comp{border-top:0;padding-top:6px}
+.crow textarea{border:0;background:var(--bot);border-radius:22px;padding:10px 16px}
+.crow textarea:focus{outline:none;box-shadow:0 0 0 2px var(--draftline)}
+.send{background:transparent;color:var(--acc);font-size:22px}
+.send:disabled{opacity:.35}
+.icon{border:0;background:transparent;color:var(--acc);font-size:20px}
+.icon:hover{background:var(--hover)}
+dialog{border:0;border-radius:16px;box-shadow:0 12px 40px #0004}
+dialog textarea,dialog select,dialog input{border:0;background:var(--bot);border-radius:10px}
+.empty b{font-size:19px}
+</style>
+</head><body>
+<div class="app" id="app" data-v="list">
+  <aside class="side">
+    <div class="shead"><b>CS Chat</b><span><button class="btn sm" id="btnSet">ตั้งค่า</button> <button class="btn pri" id="btnNew">+ เคสใหม่</button></span></div>
+    <div class="rooms"><button class="btn sm" id="rT" aria-pressed="true">Ticket</button><button class="btn sm" id="rP" aria-pressed="false">ตอบเพจ</button></div>
+    <div class="list" id="list"></div>
+  </aside>
+  <section class="main" id="main"></section>
+</div>
+
+<dialog id="dlg">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">ตั้งค่า</b><button class="btn" id="dClose">ปิด</button></div>
+  <h3>AI ฟรี (ใส่คีย์อย่างน้อย 1 เจ้า ระบบสลับให้เองเมื่อเจ้าแรกเต็ม)</h3>
+  <div class="hint">คีย์เก็บในเบราว์เซอร์เครื่องนี้เท่านั้น ข้อความเคสจะถูกส่งไปยังเจ้าที่ตอบ แผนฟรีบางเจ้าอาจนำข้อความไปปรับปรุงโมเดล อย่าวางอีเมล รหัสผ่าน หรือเลขบัตรของผู้เล่น</div>
+  <div id="provBox"></div>
+  <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="pSave">บันทึกคีย์</button><button class="btn" id="pTest">ทดสอบทุกเจ้า</button><span class="hint" id="pInfo"></span></div>
+  <h3>ย้ายไปเครื่องอื่น</h3>
+  <div class="hint">คัดลอกการตั้งค่าทั้งหมด (คีย์ FAQ การ์ดเกม) ไปวางในเครื่องใหม่ เก็บเป็นความลับเพราะมีคีย์อยู่ข้างใน</div>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="bExp">คัดลอกการตั้งค่า</button><button class="btn" id="bImp">นำเข้าจากช่องข้างล่าง</button></div>
+  <textarea id="bText" style="min-height:60px" placeholder="วางการตั้งค่าที่คัดลอกมาที่นี่เพื่อนำเข้า"></textarea>
+  <h3>นำเข้า FAQ ของเกม (ครั้งเดียวต่อเกม)</h3>
+  <div class="hint">เปิดเอกสาร FAQ ของเกมใน Google Docs กด Ctrl+A แล้ว Ctrl+C มาวางที่นี่</div>
+  <select id="fGame"></select>
+  <textarea id="fText" placeholder="วางข้อความ FAQ ที่นี่"></textarea>
+  <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="fSave">บันทึก FAQ เกมนี้</button><span class="hint" id="fInfo"></span></div>
+  <h3>การ์ดเกม (บุคลิก คำลงท้าย ลิงก์ ข้อห้าม)</h3>
+  <select id="cGame"></select>
+  <textarea id="cText" style="min-height:130px"></textarea>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="cSave">บันทึกการ์ด</button><button class="btn" id="cNew">เพิ่มเกมใหม่</button></div>
+  <h3>คำสั่งหลัก</h3>
+  <textarea id="kText" style="min-height:200px"></textarea>
+  <div style="margin-top:8px;display:flex;gap:8px"><button class="btn pri" id="kSave">บันทึก</button><button class="btn" id="kReset">คืนค่าเริ่มต้น</button></div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+const CORE=`คุณคือผู้ช่วยของเจ้าหน้าที่ CS เกม (คนไทย) คุยกับเจ้าหน้าที่แบบแชท ข้อความที่เจ้าหน้าที่วางมาโดยทั่วไปคือข้อความของผู้เล่น ถ้าเจ้าหน้าที่พิมพ์ถึงคุณโดยตรง (เช่น "ปรับให้สั้นลง" "ผู้เล่นตอบมาว่า..." "ทีมงานแจ้งว่า...") ให้ทำตามนั้น เจ้าหน้าที่จะอ่านและปรับก่อนส่งเองเสมอ คุณเป็นนักเจรจา CS มืออาชีพและนักวิเคราะห์ภาษา ประเมินอารมณ์และเจตนาจากถ้อยคำเท่านั้น ไม่ได้อ่านใจจริง ถ้าไม่แน่ใจให้บอกว่าเป็นการประเมิน
+
+กฎเหล็ก
+- ห้ามเดาข้อเท็จจริง ตอบเฉพาะที่มีในข้อมูลที่ให้ ถ้าไม่พบให้บอกว่า "ไม่พบข้อมูล" แล้วเสนอร่างข้อความถามทีมงาน
+- ลำดับความน่าเชื่อถือ: ข้อมูลที่เจ้าหน้าที่บอก > FAQ > เว็บไซต์ทางการ > เพจทางการ > ชุมชนผู้เล่น (ประกอบเท่านั้น)
+- ข้อมูลขัดกันให้บอกว่าขัด ยึดแหล่งที่เชื่อถือกว่า แล้วให้เจ้าหน้าที่ตรวจ
+- ห้ามระบุเวลาที่แน่นอนว่าจะเสร็จเมื่อไร ห้ามสัญญาโดยไม่มีข้อมูลรองรับ
+- ห้ามเดาเหตุผลที่โดนแบน ห้ามแนะนำสิ่งผิดกฎหมายหรือผิดกติกา ห้ามชวนให้ดำเนินการทางกฎหมาย ห้ามยอมให้สิทธิพิเศษรายบุคคล เช่น สตรีมเมอร์
+- เรียกทีมหลังบ้านว่า "ทีมงาน" เสมอ ไม่ใช้ "ทีม" เฉยๆ
+- FAQ ที่มีหมายเหตุเช่น "ห้ามส่งลิงก์ให้ผู้เล่น" ให้ทำตามและเตือนเจ้าหน้าที่
+
+รูปแบบคำตอบ ตอบสั้นแบบเพื่อนร่วมงานที่เก่ง ไม่ต้องมีหัวข้อหรือตารางเยอะ ไม่อธิบายวิธีคิด
+1) คำแนะนำสั้น 1-2 บรรทัด (ผู้เล่นรู้สึกอย่างไร เน้นอะไร ห้ามพูดอะไร)
+2) ร่างคำตอบถึงผู้เล่น ใส่ระหว่างบรรทัด [ร่าง] และ [/ร่าง] เท่านั้น (ข้อความที่ส่งได้เลย ไม่ใส่คำอธิบายในนั้น)
+3) สถานะ: ยืนยันได้จากข้อมูล / ต้องถามทีมงาน / ไม่พบข้อมูล และแหล่งที่มา (ชื่อ FAQ หรือลิงก์ ถ้าไม่มีให้บอกว่าไม่มี)
+ถ้าเจ้าหน้าที่ขอแค่ปรับร่าง ให้ตอบเป็น [ร่าง]...[/ร่าง] ใหม่พร้อมหมายเหตุสั้นมาก ถ้าถามคำถามทั่วไป ตอบตรงๆ เป็นแชท
+
+สไตล์คำตอบถึงผู้เล่น (ไม่ให้เหมือนบอท)
+- ตอบประเด็นล่าสุดของผู้เล่นก่อน ใช้รายละเอียดจากข้อความเขา (ชื่อตัวละคร ไอเทม เหตุการณ์)
+- สั้นกว่าข้อความผู้เล่น ตรงประเด็น ตัดสินใจชัด
+- ห้ามปิดท้ายด้วยประโยคเดิมซ้ำทุกเคส (เช่น "ทั้งนี้ หากมีอัปเดตเพิ่มเติม...") เลี่ยงคำทางการ: ทั้งนี้ เนื่องจาก รบกวน ขออภัยในความไม่สะดวก
+- ถามคำถามได้ไม่เกิน 1 ข้อ และต้องจำเป็นต่อการตรวจสอบจริง
+- ผู้เล่นตื๊อ/ส่งซ้ำ: ไม่ตำหนิ รับทราบความร้อนใจสั้นๆ แล้วบอกสถานะล่าสุดที่ยืนยันได้
+- เรื่องจริงจัง (บัญชี ไอเทมหาย แบน คืนเงิน) น้ำเสียงนิ่งสุภาพ ตามการ์ดเกม
+- คำลงท้าย สรรพนาม บุคลิก ตามการ์ดเกมเท่านั้น
+
+ผู้เล่นต่างชาติ: ร่างเป็นอังกฤษง่ายๆ สุภาพใน [ร่าง] แล้วเขียน "คำแปลไทยสำหรับตรวจ" นอกบล็อก ห้ามใช้ข้อมูลเซิร์ฟเวอร์ไทยกับ SEA
+
+ตัวอย่างน้ำเสียง (WarZ เรื่องจริงจัง ไม่เรียกตัวเอง): "ได้รับเรื่องแล้วครับ ส่งให้ทีมงานตรวจสอบแล้วว่าไอดีที่โดนแบนโดนด้วยเหตุผลอะไร ผลจะแจ้งใน Ticket นี้ครับ" / "เข้าใจครับว่าอยากรู้ผลเร็วที่สุด ข้อมูลที่แจ้งมาส่งให้ทีมงานครบแล้ว มีความคืบหน้าจะแจ้งใน Ticket นี้ครับ"
+
+ข้อความถามทีมงานทาง Discord (ใช้เมื่อค้นแล้วไม่พบจริงเท่านั้น): เปิดด้วย "ขออนุญาตสอบถามพี่ๆ ค่ะ/ครับ ผู้เล่นแจ้งมาว่า..." เล่าเหตุการณ์พร้อมวันที่ ตัวเลข ชื่อไอเทม/ตัวละคร สิ่งที่ผู้เล่นขอ ปิดด้วยคำถามเปิดที่ชัด ใส่ใน [ร่าง] เช่นกัน`;
+
+const GAMES=[
+{id:'cabal-pc-th',name:'Cabal PC ไทย',card:'บุคลิก: แอดมินหญิง ลงท้าย ค่ะ/คะ\nผู้เล่น: ไทยเป็นหลัก ต่างชาติตอบอังกฤษพร้อมคำแปลไทย\nข่าวทางการ: https://th-news.combocabal.com/'},
+{id:'cabal-pc-sea',name:'Cabal PC SEA',card:'บุคลิก: แอดมินหญิง\nภาษา: ตอบอังกฤษกับผู้เล่นที่ไม่ใช่คนไทย พร้อมคำแปลไทยให้ตรวจ\nข่าวทางการ: https://sea-news.combocabal.com/\nFAQ ทางการ: https://combocabal.com/sea/faq\nห้ามใช้ข้อมูลเซิร์ฟเวอร์ไทยกับ SEA'},
+{id:'cabal-m-th',name:'Cabal M ไทย',card:'บุคลิก: แอดมินหญิง ลงท้าย ค่ะ/คะ\nข่าวทางการ: https://news.combocabalm.com/'},
+{id:'cabal-m-sea',name:'Cabal M SEA',card:'บุคลิก: แอดมินหญิง\nภาษา: ตอบอังกฤษกับผู้เล่นที่ไม่ใช่คนไทย พร้อมคำแปลไทยตรวจ\nข่าวทางการ: https://sea-news.combocabalm.com/\nFAQ ทางการ: https://combocabal.com/sea/faq\nห้ามใช้ข้อมูลเซิร์ฟเวอร์ไทยกับ SEA'},
+{id:'cabal-revo',name:'CABAL Revolution',card:'บุคลิก: แอดมินหญิง ลงท้าย ค่ะ/คะ\nข่าวทางการ: https://combocabalrevo.com/th/news/'},
+{id:'tales-runner',name:'Tales Runner',card:'บุคลิก: ปิเอโร่ (ผู้ชาย) ลงท้าย ครับ\nข่าวทางการ: https://talesrunner.thehof.gg/news'},
+{id:'warz-th',name:'WarZ TH',card:'บุคลิก: ผู้ชาย ลงท้าย ครับ เรื่องทั่วไปเรียกตัวเองว่า "พี่บ๊อบ" หรือ "แอดมิน"\nเรื่องจริงจัง (บัญชี ไอเทมหาย แบน คืนเงิน): ใช้ "แอดมิน" หรือไม่เรียกตัวเองเลย น้ำเสียงนิ่ง สุภาพ ไม่ล้อเล่น\nข่าวทางการ: https://warzth.thehof.gg/news'},
+{id:'tosm',name:'Tree of Savior M',card:'บุคลิก: แอดมินหญิง ลงท้าย ค่ะ/คะ\nข่าวทางการ: https://tosm.exe.in.th/news/\nยังไม่มี FAQ ถ้าไม่พบข้อมูลให้ถามทีมงาน'},
+{id:'9yin',name:'9Yin Classic',card:'บุคลิก: ยังไม่ยืนยันเพศ หลีกเลี่ยงคำลงท้ายที่บอกเพศ ใช้ภาษากลางๆ สุภาพ\nข่าวทางการ: https://9yinclassic.exe.in.th/news/'},
+{id:'zone4',name:'Zone4 Extreme',card:'บุคลิก: ยังไม่ยืนยันเพศ หลีกเลี่ยงคำลงท้ายที่บอกเพศ\nข่าวทางการ: https://www.zone4extreme.com/news'}
+];
+
+const mem={};
+const S={get(k){try{const v=localStorage.getItem(k);return v==null?(mem[k]??null):v}catch(e){return mem[k]??null}},
+set(k,v){mem[k]=v;try{localStorage.setItem(k,v);return true}catch(e){return false}},
+del(k){delete mem[k];try{localStorage.removeItem(k)}catch(e){}}};
+const J=(k,d)=>{try{const v=S.get(k);return v?JSON.parse(v):d}catch(e){return d}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+let games=J('cc_games',GAMES), core=S.get('cc_core')||CORE, chats=J('cc_chats',[]);
+let room='ticket', cur=null, busy=false, pend=[], lastGame=S.get('cc_lastgame')||games[0].id;
+const save=()=>S.set('cc_chats',JSON.stringify(chats));
+const gname=id=>(games.find(g=>g.id===id)||{name:'?'}).name;
+const view=v=>$('app').dataset.v=v;
+
+/* ---------- AI providers (free tiers, auto fallback) ---------- */
+const DEF_PROV=[
+ {id:'gemini',name:'Gemini (อ่านรูปได้ ฟรี)',type:'gemini',key:'',model:'gemini-2.5-flash',base:'',on:true},
+ {id:'openrouter',name:'OpenRouter (อ่านรูปได้ ฟรี)',type:'openai',key:'',model:'openrouter/free',base:'https://openrouter.ai/api/v1',on:true},
+ {id:'groq',name:'Groq (ยังไม่ยืนยันว่าอ่านรูปได้ ปิดไว้ก่อน)',type:'openai',key:'',model:'meta-llama/llama-4-scout-17b-16e-instruct',base:'https://api.groq.com/openai/v1',on:false},
+ {id:'openai',name:'OpenAI (GPT) เสียเงินตามการใช้ ตัวสำรองสุดท้าย',type:'openai',key:'',model:'gpt-4o-mini',base:'https://api.openai.com/v1',on:false}
+];
+let provs=(()=>{const saved=J('cc_prov',null);if(!saved)return DEF_PROV.map(p=>({...p}));return DEF_PROV.map(d=>({...d,...(saved.find(x=>x.id===d.id)||{})}))})();
+const saveProv=()=>S.set('cc_prov',JSON.stringify(provs));
+const activeProv=()=>provs.filter(p=>p.on&&p.key.trim());
+function timeoutFetch(url,opt,ms){const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms);return fetch(url,{...opt,signal:ac.signal}).finally(()=>clearTimeout(t))}
+async function callGemini(p,ms,imgs){
+  const sys=ms[0].content;
+  const contents=ms.map((m,i)=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+  if(imgs.length){const last=contents[contents.length-1];imgs.forEach(d=>{const[h,b]=d.split(',');last.parts.push({inlineData:{mimeType:/:(.*?);/.exec(h)[1],data:b}})})}
+  const r=await timeoutFetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(p.model)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':p.key.trim()},body:JSON.stringify({contents,generationConfig:{temperature:0.6}})},60000);
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error('HTTP '+r.status+' '+((j.error&&j.error.message)||'').slice(0,120));
+  const t=(((j.candidates||[])[0]||{}).content||{}).parts;
+  const txt=t&&t.map(x=>x.text||'').join('');
+  if(!txt)throw new Error('ไม่มีคำตอบ ('+(((j.candidates||[])[0]||{}).finishReason||(j.promptFeedback&&j.promptFeedback.blockReason)||'?')+')');
+  return txt;
+}
+async function callOpenAI(p,ms,imgs){
+  imgs=imgs||[];
+  if(imgs.length){ms=ms.slice();const l=ms[ms.length-1];ms[ms.length-1]={role:l.role,content:[{type:'text',text:l.content}].concat(imgs.map(d=>({type:'image_url',image_url:{url:d}})))}}
+  const r=await timeoutFetch(p.base.replace(/\/$/,'')+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key.trim()},body:JSON.stringify({model:p.model,messages:ms,temperature:0.6})},60000);
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error('HTTP '+r.status+' '+((j.error&&(j.error.message||j.error))+'').slice(0,120));
+  const txt=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+  if(!txt)throw new Error('ไม่มีคำตอบ');
+  return txt;
+}
+async function askAI(c){
+  const ps=activeProv();
+  if(!ps.length)throw Object.assign(new Error('nokey'),{nokey:true});
+  const ms=apiMessages(c);
+  const lastImgs=(c.msgs[c.msgs.length-1].imgs)||[];
+  const fails=[];
+  for(const p of ps){
+    try{
+      const text=p.type==='gemini'?await callGemini(p,ms,lastImgs):await callOpenAI(p,ms.map(m=>({role:m.role,content:m.content})),lastImgs);
+      return{text,by:p.name,fails,noImg:false};
+    }catch(e){fails.push(p.name+': '+(e.name==='AbortError'?'หมดเวลา':e.message))}
+  }
+  throw Object.assign(new Error('all failed'),{fails});
+}
+/* ---------- FAQ retrieval ---------- */
+const tri=s=>{s=s.toLowerCase().replace(/\s+/g,'');const o=new Set();for(let i=0;i<s.length-2;i++)o.add(s.substr(i,3));return o};
+const faqCache={};
+function pickFaq(gid,query,budget){
+  const raw=S.get('cc_faq_'+gid);if(!raw)return null;
+  let F=faqCache[gid];
+  if(!F||F.raw!==raw){const entries=raw.split('\n').map(x=>x.trim()).filter(x=>x.length>4&&!/^FAQ /.test(x));const sets=entries.map(tri),df=new Map();sets.forEach(s=>s.forEach(t=>df.set(t,(df.get(t)||0)+1)));F=faqCache[gid]={raw,entries,sets,df}}
+  const q=tri(query),N=F.entries.length;
+  const sc=F.entries.map((e,i)=>{let s=0;q.forEach(t=>{if(F.sets[i].has(t))s+=Math.log(1+N/F.df.get(t))});return[s/Math.sqrt(1+e.length/200),i]}).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]);
+  const out=[];let used=0;
+  for(const[,i]of sc){const e=F.entries[i];if(used+e.length>budget)continue;out.push(e);used+=e.length;if(out.length>=14)break}
+  return out;
+}
+
+/* ---------- build API input ---------- */
+function ctxFor(c){
+  const g=games.find(x=>x.id===c.game)||games[0];
+  const mode=c.room==='page'?'ห้องนี้คือตอบบนเพจ (คอมเมนต์/อินบ็อกซ์เฟซบุ๊ก): ตอบสั้นกว่า เป็นกันเองกว่า ใช้เฉพาะข้อมูลที่เปิดเผยได้ ห้ามขอข้อมูลบัญชีในคอมเมนต์ ชวนทักอินบ็อกซ์หรือเปิด Ticket':'ห้องนี้คือ Ticket';
+  return `${core}\n\n# เกมของเคสนี้: ${g.name}\n${g.card}\n\n# ${mode}`;
+}
+function faqBlock(c){
+  const q=c.msgs.filter(m=>m.r==='u').slice(-3).map(m=>m.t).join(' ');
+  const f=pickFaq(c.game,q,12000);
+  if(f===null)return '(ยังไม่ได้นำเข้า FAQ ของเกมนี้ ถ้าไม่มีข้อมูลรองรับให้บอกว่าไม่พบ)';
+  if(!f.length)return '(ค้น FAQ แล้วไม่พบรายการที่เกี่ยวข้องกับข้อความล่าสุด)';
+  return f.map((e,i)=>(i+1)+'. '+e).join('\n');
+}
+function apiMessages(c){
+  const ms=[];
+  c.msgs.forEach((m,i)=>{const role=m.r==='u'?'user':'assistant';const t=m.t||'(รูป)';if(ms.length&&ms[ms.length-1].role===role)ms[ms.length-1].content+='\n\n'+t;else ms.push({role,content:t})});
+  if(!ms.length||ms[0].role!=='user')ms.unshift({role:'user',content:'(เริ่มเคส)'});
+  ms[0].content='[ข้อมูลตั้งต้นของเคสนี้]\n'+ctxFor(c)+'\n\n[ข้อความแรกของเจ้าหน้าที่]\n'+ms[0].content;
+  const last=ms[ms.length-1];
+  last.content+='\n\n[FAQ ที่เกี่ยวข้องกับข้อความล่าสุด ใช้เฉพาะที่นี่ ถ้าไม่มีคำตอบให้บอกว่าไม่พบ]\n'+faqBlock(c);
+  return ms;
+}
+function flat(c){return apiMessages(c).map(m=>(m.role==='user'?'[เจ้าหน้าที่]\n':'[ผู้ช่วย]\n')+m.content).join('\n\n')+'\n\n[ผู้ช่วย] ตอบข้อความล่าสุดของเจ้าหน้าที่ตามรูปแบบที่กำหนด'}
+
+/* ---------- list ---------- */
+function renderList(){
+  const L=chats.filter(c=>c.room===room).sort((a,b)=>b.updated-a.updated);
+  $('rT').setAttribute('aria-pressed',room==='ticket');$('rP').setAttribute('aria-pressed',room==='page');
+  $('list').innerHTML=L.length?L.map(c=>{const lm=c.msgs[c.msgs.length-1];return `<button class="item" data-i="${esc(((c.title||'เ').trim()[0]||'เ').toUpperCase())}" data-id="${c.id}" ${c.id===cur?'aria-current="true"':''}><b>${esc(c.title||'เคสใหม่')}</b><small>${esc(gname(c.game))}${lm?' · '+esc((lm.t||'(รูป)').replace(/\s+/g,' ').slice(0,40)):''}</small></button>`}).join(''):'<div class="hint pad">ยังไม่มีเคส กด "+ เคสใหม่"</div>';
+  $('list').querySelectorAll('.item').forEach(b=>b.onclick=()=>{cur=b.dataset.id;pend=[];render();view('chat')});
+}
+$('rT').onclick=()=>{room='ticket';cur=null;render();view('list')};
+$('rP').onclick=()=>{room='page';cur=null;render();view('list')};
+$('btnNew').onclick=()=>{const c={id:uid(),room,game:lastGame,title:'',msgs:[],updated:Date.now()};chats.push(c);cur=c.id;pend=[];save();render();view('chat');setTimeout(()=>{const t=$('inp');t&&t.focus()},60)};
+
+/* ---------- main ---------- */
+function render(){renderList();renderMain()}
+function bubble(m,i){
+  const imgs=(m.imgs||[]).map(d=>`<img src="${d}" alt="รูป">`).join('');
+  if(m.r==='u')return `<div class="b u">${imgs}${esc(m.t||'')}</div>`;
+  const parts=[];let last=0,t=m.t||'',re=/\[ร่าง\]([\s\S]*?)\[\/ร่าง\]/g,x,k=0;
+  while((x=re.exec(t))){if(x.index>last)parts.push(['t',t.slice(last,x.index)]);parts.push(['d',x[1].trim(),k++]);last=re.lastIndex}
+  if(last<t.length)parts.push(['t',t.slice(last)]);
+  const body=parts.map(p=>p[0]==='t'?(p[1].trim()?esc(p[1].trim()):''):`<div class="draft"><div class="dh"><span>ร่างคำตอบ</span><button class="btn sm" data-cp="${i}:${p[2]}">คัดลอก</button></div>${esc(p[1])}</div>`).join('');
+  return `<div class="b a">${body||esc(t)}${m.note?`<div class="hint" style="margin-top:6px">${esc(m.note)}</div>`:(m.by?`<div class="hint" style="margin-top:6px">ตอบโดย ${esc(m.by)}</div>`:'')}</div>`;
+}
+function renderMain(){
+  const c=chats.find(x=>x.id===cur),m=$('main');
+  if(!c){m.innerHTML=`<div class="empty" style="margin:auto"><p><b>เลือกเคสทางซ้าย หรือกด "+ เคสใหม่"</b></p><p>เหมือนแชทปกติ 1 เคสคือ 1 แชท คุยกันในแชทนั้นไม่ปนกับเคสอื่น วางข้อความผู้เล่นแล้วได้คำแนะนำพร้อมร่างคำตอบ</p></div>`;return}
+  const noFaq=!S.get('cc_faq_'+c.game);
+  m.innerHTML=`
+  <div class="mhead"><button class="btn sm back" id="back">‹ เคส</button>
+    <input id="ttl" value="${esc(c.title)}" placeholder="ตั้งชื่อเคส (เลขตั๋ว/ชื่อผู้เล่น)">
+    <select id="gsel">${games.map(g=>`<option value="${g.id}" ${g.id===c.game?'selected':''}>${esc(g.name)}</option>`).join('')}</select>
+    <button class="btn sm" id="del">ปิดเคส</button></div>
+  <div class="chat" id="chat">${c.msgs.length?c.msgs.map(bubble).join(''):`<div class="empty"><b>วางข้อความผู้เล่นได้เลย</b><p>${noFaq?'<span class="warn">เกมนี้ยังไม่ได้นำเข้า FAQ (ตั้งค่า) จะไม่มีข้อมูลให้ตอบ</span>':'พิมพ์ถึงผู้ช่วยได้ เช่น "ปรับให้สั้นลง" หรือ "ทีมงานแจ้งว่า..."'}</p></div>`}${busy?'<div class="b a" id="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>':''}</div>
+  <div class="comp"><div class="thumbs" id="thumbs">${pend.map((d,i)=>`<div><img src="${d}" alt=""><button data-rm="${i}" aria-label="ลบรูป">×</button></div>`).join('')}</div>
+    <div class="crow"><label class="icon" title="แนบรูป" id="imgLbl">📎<input type="file" id="file" accept="image/*" multiple hidden></label><textarea id="inp" rows="1" placeholder="วางข้อความผู้เล่น หรือพิมพ์ถึงผู้ช่วย"></textarea><button class="send" id="send" aria-label="ส่ง">➤</button></div>
+    <div class="tools" id="tools"></div></div>`;
+  wire(c);
+  const ch=$('chat');ch.scrollTop=ch.scrollHeight;
+}
+async function wire(c){
+  $('back').onclick=()=>{view('list')};
+  $('ttl').oninput=e=>{c.title=e.target.value;save();renderList()};
+  $('gsel').onchange=e=>{c.game=e.target.value;lastGame=c.game;S.set('cc_lastgame',lastGame);save();render()};
+  $('del').onclick=()=>{const b=$('del');if(b.dataset.arm){chats=chats.filter(x=>x.id!==c.id);cur=null;save();render();view('list')}else{b.dataset.arm=1;b.textContent='ยืนยันลบเคส';b.classList.add('pri');setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent='ปิดเคส';b.classList.remove('pri')}},4000)}};
+  document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const[i,k]=b.dataset.cp.split(':').map(Number);const t=chats.find(x=>x.id===cur).msgs[i].t;const ds=[...t.matchAll(/\[ร่าง\]([\s\S]*?)\[\/ร่าง\]/g)];copy(ds[k][1].trim(),b)});
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{pend.splice(+b.dataset.rm,1);renderMain()});
+  $('file').onchange=async e=>{for(const f of e.target.files){const d=await shrink(f);if(d)pend.push(d)}renderMain()};
+  const inp=$('inp');
+  inp.oninput=()=>{inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,160)+'px'};
+  inp.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send(c)}};
+  $('send').onclick=()=>send(c);
+  $('send').disabled=busy;
+  const tl=$('tools');if(!tl)return;
+  const n=activeProv().length;
+  tl.innerHTML=(n?`<span>AI พร้อม ${n} เจ้า (สลับให้เองถ้าเต็ม)</span>`:'<span class="warn">ยังไม่ได้ใส่คีย์ AI ฟรี กด "ตั้งค่า" ก่อน</span>')+' <a id="cpAll">คัดลอกเคสนี้ไปถาม AI เจ้าอื่น</a><a id="pasteBack">วางคำตอบจาก AI เจ้าอื่นกลับเข้าแชท</a>';
+  $('cpAll').onclick=()=>copy(flat(c),$('cpAll'));
+  $('pasteBack').onclick=()=>{const t=$('inp').value.trim();if(!t){$('inp').placeholder='วางคำตอบของ AI ที่ช่องนี้ก่อน แล้วกดลิงก์นี้อีกครั้ง';$('inp').focus();return}c.msgs.push({r:'a',t,at:Date.now()});c.updated=Date.now();$('inp').value='';save();render()};
+}
+async function send(c){
+  const inp=$('inp');const t=inp.value.trim();if((!t&&!pend.length)||busy)return;
+  c.msgs.push({r:'u',t,imgs:pend.slice(),at:Date.now()});
+  if(!c.title&&t)c.title=t.replace(/\s+/g,' ').slice(0,28);
+  pend=[];c.updated=Date.now();save();
+  busy=true;render();
+  try{
+    const r=await askAI(c);
+    let txt=r.text;
+    c.msgs.push({r:'a',t:txt,by:r.by,note:(r.fails.length?'สลับมาใช้ '+r.by+' เพราะ '+r.fails.join(' | '):'')+(r.noImg?' (เจ้านี้ไม่อ่านรูป)':''),at:Date.now()});
+  }catch(e){
+    const msg=e.nokey?'ยังไม่ได้ใส่คีย์ AI กด "ตั้งค่า" ด้านบนซ้าย แล้วใส่คีย์ฟรีอย่างน้อย 1 เจ้า (วิธีขอคีย์อยู่ในหน้าตั้งค่า)':'ตอบไม่ได้ทุกเจ้าตอนนี้\n'+((e.fails||[]).join('\n'))+'\nลองใหม่อีกสักครู่ หรือใช้ลิงก์ "คัดลอกเคสนี้ไปถาม AI เจ้าอื่น" ใต้ช่องพิมพ์';
+    c.msgs.push({r:'a',t:msg,at:Date.now(),err:1});
+  }
+  busy=false;c.updated=Date.now();save();render();
+}
+async function copy(t,el){const old=el.textContent;const done=()=>{el.textContent='คัดลอกแล้ว';setTimeout(()=>{if(el.isConnected)el.textContent=old},1800)};try{await navigator.clipboard.writeText(t);done()}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(_){el.textContent='เลือกข้อความเอง'}ta.remove()}}
+function shrink(f){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height));const cv=document.createElement('canvas');cv.width=im.width*k;cv.height=im.height*k;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',.72))};im.onerror=()=>res(null);im.src=r.result};r.onerror=()=>res(null);r.readAsDataURL(f)})}
+
+
+const HOW={gemini:'ขอคีย์ฟรี: aistudio.google.com/apikey (ล็อกอินด้วยบัญชี Google)',groq:'ขอคีย์ฟรี: console.groq.com/keys (ต้องใช้โมเดลที่อ่านรูปได้ ปุ่มทดสอบจะบอกว่าใช้ได้ไหม)',openai:'คีย์ที่ platform.openai.com/api-keys (ต้องเติมเงินแยกจากแพ็กเกจ ChatGPT ปกติ คิดตามจำนวนที่ใช้ ดูราคาที่ platform.openai.com/pricing)',openrouter:'ขอคีย์ฟรี: openrouter.ai/keys (โมเดล openrouter/free = สุ่มโมเดลฟรีที่อ่านรูปได้ให้เอง)'};
+function provUI(){
+  $('provBox').innerHTML=provs.map((p,i)=>`<div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-pon="${i}" ${p.on?'checked':''} style="width:auto;margin:0"><b>${i+1}. ${p.name}</b><span class="hint">${HOW[p.id]}</span></label><input type="password" data-pkey="${i}" placeholder="วางคีย์ที่นี่" value="${esc(p.key)}" autocomplete="off"><input type="text" data-pmodel="${i}" value="${esc(p.model)}" aria-label="ชื่อโมเดล"></div>`).join('');
+}
+function provRead(){document.querySelectorAll('[data-pon]').forEach(e=>provs[+e.dataset.pon].on=e.checked);document.querySelectorAll('[data-pkey]').forEach(e=>provs[+e.dataset.pkey].key=e.value.trim());document.querySelectorAll('[data-pmodel]').forEach(e=>provs[+e.dataset.pmodel].model=e.value.trim())}
+$('pSave').onclick=()=>{provRead();saveProv();$('pInfo').textContent='บันทึกแล้ว';setTimeout(()=>$('pInfo').textContent='',1500)};
+$('pTest').onclick=async()=>{provRead();saveProv();$('pInfo').textContent='กำลังทดสอบ...';const out=[];const ms=[{role:'user',content:'ตอบสั้นๆ ว่า พร้อม'}];
+  for(const p of provs.filter(p=>p.key)){try{const t=p.type==='gemini'?await callGemini(p,ms,[]):await callOpenAI(p,ms);out.push(p.name+' ใช้ได้')}catch(e){out.push(p.name+': '+e.message)}}
+  $('pInfo').textContent=out.join(' | ')||'ยังไม่ได้ใส่คีย์'};
+const EXP_KEYS=()=>Object.keys(localStorage).filter(k=>k.startsWith('cc_')&&k!=='cc_chats');
+$('bExp').onclick=()=>{const o={};EXP_KEYS().forEach(k=>o[k]=localStorage.getItem(k));copy(JSON.stringify(o),$('bExp'))};
+$('bImp').onclick=()=>{try{const o=JSON.parse($('bText').value);Object.entries(o).forEach(([k,v])=>{if(/^cc_/.test(k)&&k!=='cc_chats')S.set(k,v)});games=J('cc_games',GAMES);core=S.get('cc_core')||CORE;provs=(()=>{const saved=J('cc_prov',null);return DEF_PROV.map(d=>({...d,...((saved||[]).find(x=>x.id===d.id)||{})}))})();fill();provUI();$('bText').value='';$('bImp').textContent='นำเข้าแล้ว'}catch(e){$('bImp').textContent='รูปแบบไม่ถูกต้อง'}setTimeout(()=>$('bImp').textContent='นำเข้าจากช่องข้างล่าง',1800)};
+
+/* ---------- settings ---------- */
+const dlg=$('dlg');
+function fill(){const o=games.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');$('fGame').innerHTML=o;$('cGame').innerHTML=o;fInfo();cLoad();$('kText').value=core}
+function fInfo(){const raw=S.get('cc_faq_'+$('fGame').value);const n=raw?raw.split('\n').filter(x=>x.trim().length>4).length:0;$('fInfo').textContent=n?`มี FAQ ${n} บรรทัดแล้ว (วางใหม่เพื่อแทนที่)`:'ยังไม่มี FAQ';$('fText').value=''}
+function cLoad(){const g=games.find(x=>x.id===$('cGame').value);$('cText').value=g?g.card:'';delete $('cText').dataset.nw;$('cNew').textContent='เพิ่มเกมใหม่'}
+$('btnSet').onclick=()=>{fill();provUI();dlg.showModal()};$('dClose').onclick=()=>{dlg.close();render()};
+$('fGame').onchange=fInfo;$('cGame').onchange=cLoad;
+$('fSave').onclick=()=>{const t=$('fText').value.trim();if(!t)return;const ok=S.set('cc_faq_'+$('fGame').value,t);fInfo();if(!ok)$('fInfo').textContent='พื้นที่เก็บเต็ม บันทึกไม่ได้'};
+$('cSave').onclick=()=>{if($('cText').dataset.nw)return;const g=games.find(x=>x.id===$('cGame').value);g.card=$('cText').value;S.set('cc_games',JSON.stringify(games));$('cSave').textContent='บันทึกแล้ว';setTimeout(()=>$('cSave').textContent='บันทึกการ์ด',1400)};
+$('cNew').onclick=()=>{const T=$('cText');if(!T.dataset.nw){T.dataset.nw='1';T.value='ชื่อเกม: \nบุคลิก คำลงท้าย สรรพนาม: \nข่าวทางการ: \nข้อห้ามเฉพาะเกม: ';$('cNew').textContent='กดอีกครั้งเพื่อบันทึกเป็นเกมใหม่';return}
+  const L=T.value.split('\n');const nm=(L[0]||'').replace(/^ชื่อเกม:\s*/,'').trim();if(!nm)return;games.push({id:'g'+uid(),name:nm,card:L.slice(1).join('\n')});S.set('cc_games',JSON.stringify(games));fill();$('cGame').value=games[games.length-1].id;cLoad()};
+$('kSave').onclick=()=>{core=$('kText').value;S.set('cc_core',core);$('kSave').textContent='บันทึกแล้ว';setTimeout(()=>$('kSave').textContent='บันทึก',1400)};
+$('kReset').onclick=()=>{core=CORE;S.del('cc_core');$('kText').value=core};
+
+render();
+if(!activeProv().length&&!chats.length){fill();provUI();dlg.showModal()}
+})();
+
+(function(){
+ const P={
+  'ฟ้า (ค่าเริ่มต้น)':null,
+  'เขียว':{a:'#0f9d7a',m:'#0f9d7a',f:'#fff'},
+  'น้ำเงิน':{a:'#2563eb',m:'#2563eb',f:'#fff'},
+  'ม่วง':{a:'#7c3aed',m:'#7c3aed',f:'#fff'},
+  'ชมพู':{a:'#db2777',m:'#db2777',f:'#fff'},
+  'ส้ม':{a:'#ea580c',m:'#ea580c',f:'#fff'},
+  'แดง':{a:'#dc2626',m:'#dc2626',f:'#fff'}
+ };
+ const M={'ตามเครื่อง':'','สว่าง':'light','มืด':'dark'};
+ const g=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+ const s=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+ function apply(){
+  const r=document.documentElement, p=P[g('cc_color')]||null, m=M[g('cc_mode')]||'';
+  ['--acc','--me','--acc-fg'].forEach(v=>r.style.removeProperty(v));
+  if(p){r.style.setProperty('--acc',p.a);r.style.setProperty('--me',p.m);r.style.setProperty('--acc-fg',p.f)}
+  if(m)r.setAttribute('data-theme',m);else r.removeAttribute('data-theme');
+  r.style.fontSize='';
+  const fs=g('cc_fs'); if(fs)document.body.style.fontSize=fs+'px';
+ }
+ function mk(opts,key,title){
+  const e=document.createElement('select');e.title=title;e.className='btn sm';
+  Object.keys(opts).forEach(k=>{const o=document.createElement('option');o.textContent=k;e.appendChild(o)});
+  e.value=g(key)||Object.keys(opts)[0];
+  e.onchange=()=>{s(key,e.value);apply()};return e;
+ }
+ const h=document.querySelector('.shead span'); if(h){
+  const w=document.createElement('div');w.style.cssText='display:flex;gap:4px;flex-wrap:wrap;margin-top:6px';
+  w.appendChild(mk(P,'cc_color','สีหลัก'));w.appendChild(mk(M,'cc_mode','โหมดสว่าง/มืด'));
+  const f=document.createElement('select');f.className='btn sm';f.title='ขนาดตัวอักษร';
+  [['ตัวอักษรปกติ',''],['ใหญ่ขึ้น','17'],['ใหญ่มาก','19'],['เล็กลง','13']].forEach(([t,v])=>{const o=document.createElement('option');o.textContent=t;o.value=v;f.appendChild(o)});
+  f.value=g('cc_fs')||'';f.onchange=()=>{s('cc_fs',f.value);if(!f.value)document.body.style.fontSize='';apply()};
+  w.appendChild(f);
+  h.parentNode.parentNode.insertBefore(w,h.parentNode.nextSibling);
+ }
+ apply();
+})();
+</script>
+</body></html>
